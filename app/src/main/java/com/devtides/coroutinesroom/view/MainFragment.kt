@@ -12,6 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.Navigation
 import com.devtides.coroutinesroom.R
+import com.devtides.coroutinesroom.model.LoginState
 import com.devtides.coroutinesroom.viewmodel.MainViewModel
 import kotlinx.android.synthetic.main.fragment_main.*
 
@@ -31,28 +32,42 @@ class MainFragment : Fragment() {
 
         signoutBtn.setOnClickListener { onSignout() }
         deleteUserBtn.setOnClickListener { onDelete() }
+        usernameTV.text = LoginState.user?.userName
 
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
         observeViewModel()
     }
 
-    fun observeViewModel() {
-        viewModel.signout.observe(this, Observer {
-
+    private fun observeViewModel() {
+        viewModel.signout.observe(viewLifecycleOwner, Observer {
+            Toast.makeText(activity, getString(R.string.sign_out), Toast.LENGTH_SHORT).show()
+            goToSignUpScreen()
         })
-        viewModel.userDeleted.observe(this, Observer {
-
+        viewModel.userDeleted.observe(viewLifecycleOwner, Observer {
+            Toast.makeText(activity, getString(R.string.user_deleted), Toast.LENGTH_SHORT).show()
+            goToSignUpScreen()
         })
+    }
+
+    private fun goToSignUpScreen() {
+        val action = MainFragmentDirections.actionGoToSignup()
+        Navigation.findNavController(usernameTV).navigate(action)
     }
 
     private fun onSignout() {
-        val action = MainFragmentDirections.actionGoToSignup()
-        Navigation.findNavController(usernameTV).navigate(action)
+        viewModel.onSignout()
     }
 
     private fun onDelete() {
-        val action = MainFragmentDirections.actionGoToSignup()
-        Navigation.findNavController(usernameTV).navigate(action)
+        activity?.let {
+            AlertDialog.Builder(it)
+                .setTitle(getString(R.string.delete_dialog_title))
+                .setMessage(getString(R.string.delete_dialog_message))
+                .setPositiveButton(getString(R.string.delete_dialog_positive_btn)) { _, _ -> viewModel.onDeleteUser() }
+                .setNegativeButton(getString(R.string.delete_dialog_negative_btn), null)
+                .create()
+                .show()
+        }
     }
 
 }
